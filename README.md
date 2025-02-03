@@ -1,5 +1,5 @@
 # Оповещения OpenProject в Telegram
-![preview.png](/preview.png)
+<img src="/preview.png" height=350></img>
 ## Установка
 1. `git clone gerrustalker/openproject-webhooks-telegram`
 2. `cd openproject-webhooks-telegram`

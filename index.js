@@ -7,10 +7,18 @@ const client = new Bot(config.token)
 const app = express()
 app.use(express.json())
 
-var escape = (t) => t.replace(/([|{\[\]*_~}+)`(#>!=\-.])/gm, '\\$1')
+var escape = (t) => t.replace(/(?<!\\)([|{\[\]*_~}+)`(#>!=\-.])/gm, '\\$1') // https://stackoverflow.com/questions/40626896/telegram-does-not-escape-some-markdown-characters#comment132933479_71313944
+// var html2md = (t) => t.replace()
 var send = (m, p) => client.api.sendMessage(config.chatID, m, p ?? config.sendParams)
-var link = (n, u) => `[${escape(n)}](${config.domain}${u})`
-var desc = (t) => t.replaceAll("&quot;", "\"").replaceAll("<br>", "\n").replaceAll("*\t", "• ").replaceAll("*   [ ]", "🔘").replaceAll("*   [x]", "☑️").replace(/<figure.+<\/figure>/gm, "\\[таблица\\]").replace(/<img .+ src="([A-z0-9\/_-]+)">/, link("[изображение]", "$1"))
+var link = (n, u, lox) => `[${escape(n)}](${lox ? "" : config.domain}${u})`
+
+// bunch of very bad regex look away please
+var desc = (t) => t.replaceAll("&quot;", "\"").replaceAll("&nbsp;", " ")
+                   .replaceAll("<br>", "\n").replaceAll("*\t", "• ").replaceAll("*   [ ]", "🔘").replaceAll("*   [x]", "☑️")
+                   .replace(/<figure.+<\/figure>/gm, "\\[таблица\\]").replace(/<img .+ src="(.+)">/, link("[изображение]", "$1"))
+                   .replace(/(?<!])\((.+)\)/gm, "\\($1\\)").replace(/<mention .+ data-id="([0-9]+)".+<\/mention>/, link("[$1]", "/work_packages/$1"))
+                   .replace(/\[(.+)\]\((.+)\)/gm, link("$1", "$2", true)).replace(/(?<!\\)([.](?![^(]*\)))/gm, "\\.")
+
 var acheck = (res, type, name) => {
     if(res.status != 200) return console.log(`[op] failed to fetch ${name} [${res.status}]:`, res.data);
     if(!res.data) return console.log(`[op] failed to fetch ${name}: body is empty`);
